@@ -22,7 +22,7 @@ public class SearchPage
     private ILocator MaxPriceInput => _page.Locator("input[aria-label='Maximum Price']");
     private ILocator ListingTile => _page.Locator(".listing-tile .price");
     private ILocator ListingItemAddress => _page.Locator(".listingItem__address___CKkGl");
-    private ILocator PriceToggleValue => _page.Locator("button.priceRange__toggleButton___smxgE span.priceRange__value___c4VbX");     
+    private ILocator ListBox => _page.Locator("div[role='listbox']");
     private ILocator PriceOption(int value) {
         string formatted = value.ToString("#,0");
         return _page.Locator($"[role='option']:text-is('${formatted}')")
@@ -83,15 +83,13 @@ public class SearchPage
     public async Task AssertTileAddressesContainAsync(string cityState, int takeCount = int.MaxValue)
     {
         int total = await TileAddresses.CountAsync();
-        Assert.That(total, Is.GreaterThan(0), "Nijedan listing tile nije pronađen.");
+        Assert.That(total, Is.GreaterThan(0), "No list has been found.");
 
         int limit = Math.Min(total, takeCount);
         for (int i = 0; i < limit; i++)
         {
             string addr = (await TileAddresses.Nth(i).InnerTextAsync()).Trim();
-            TestContext.Progress.WriteLine($"[DEBUG] Tile {i} → \"{addr}\"");
-
-            Assert.That(addr, Does.Contain(cityState).IgnoreCase, $"Tile #{i} ne sadrži očekivani grad „{cityState}“.");
+            Assert.That(addr, Does.Contain(cityState).IgnoreCase, $"Tile #{i} doesn't contain expected city „{cityState}“.");
         }
     }
 
@@ -140,14 +138,12 @@ public class SearchPage
             new() { State = WaitForSelectorState.Visible, Timeout = 30_000 });
     }
    
-    public async Task SetMinPriceByMenuAsync(int amount)
+    public async Task SetMinPriceByMenuAsync(int value)
     {
         await PriceToggleBtn.ClickAsync();   
         await MinPriceInput.ClickAsync(); 
-        await _page.Locator("div[role='listbox']")
-                .WaitForAsync(new() { State = WaitForSelectorState.Visible });
-
-        await PriceOption(amount).First.ClickAsync(); 
+        await ListBox.WaitForAsync(new() { State = WaitForSelectorState.Visible });
+        await PriceOption(value).First.ClickAsync(); 
         await PriceToggleBtn.WaitForAsync(new() { State = WaitForSelectorState.Visible });
     }
 
@@ -155,9 +151,7 @@ public class SearchPage
     {
         await PriceToggleBtn.ClickAsync();  
         await MaxPriceInput.ClickAsync(); 
-        await _page.Locator("div[role='listbox']")
-                .WaitForAsync(new() { State = WaitForSelectorState.Visible });
-
+        await ListBox.WaitForAsync(new() { State = WaitForSelectorState.Visible });
         await PriceOption(amount).First.ClickAsync();
         await PriceToggleBtn.WaitForAsync(new() { State = WaitForSelectorState.Visible });
     }
@@ -192,7 +186,7 @@ public class SearchPage
             if (int.TryParse(raw.Replace("$", "").Replace(",", ""), out int value))
             {
                 Assert.That(value, Is.GreaterThanOrEqualTo(minPrice),
-                    $"Pločica ({raw}) nije iznad minimalne cene ({minPrice}) kada je maksimum 'No max'.");
+                    $"Tile ({raw}) isn't above minimal price ({minPrice}) when max price is 'No max'.");
             }
             else
             {
