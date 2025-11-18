@@ -31,14 +31,21 @@ public class Tests : BaseTest
         await searchPage.SetMinPrice(minPrice);
         await searchPage.SetMaxPrice(maxPrice);
         await searchPage.AssertTilesWithinPriceAsync(minPrice, maxPrice);
-    
-        // Assert that the value in the price rang e has been given the setted price
-        // Change the price between 100000 and 400000$
-        // Asert the tiles prices no more and no less 
-        // Assert the value in the price filter to be between
-        // Change the price to be max infinite
-        // Assert that the price for tiles are higher than the minimal value setted
-        // Write the price manually
-        // Assert the values in the tiles.
     }
+
+    [TestCase("Houston, TX", 100000, 300000)]
+    public async Task Select_Price_Filter_From_Dropdown(string city, int minPrice, int maxPrice)
+    {
+        var page = await CreatePageSessionAsync();
+        var searchPage = new SearchPage(page);
+
+        await searchPage.GotoAsync();
+        await searchPage.TypePrefixCharByCharAsync("Houston, TX", 3);
+        await searchPage.SelectCitySuggestionAsync(city); 
+        await searchPage.SetMinPriceByMenuAsync(minPrice);
+        await searchPage.SetMaxPriceByMenuAsync(maxPrice);
+        await searchPage.AssertTilesWithinPriceAsync(minPrice, maxPrice);
+    }
+
+    
 }
