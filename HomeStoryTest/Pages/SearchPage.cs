@@ -25,20 +25,23 @@ public class SearchPage
     }
 
     public async Task TypePrefixCharByCharAsync(string city, int prefixLength = 3)
-{
-    await LocationSearchInput.FillAsync(string.Empty); 
-
-    string prefix = city.Substring(0, prefixLength);
-
-    foreach (char c in prefix)
     {
-        await _page.Keyboard.TypeAsync(c.ToString());
-        await _page.WaitForTimeoutAsync(100);
-    }
+        await LocationSearchInput.FillAsync(string.Empty); 
 
-    await Suggestions.First.WaitForAsync(
-        new() { State = WaitForSelectorState.Visible, Timeout = 10_000 });
-}
+        string prefix = city.Substring(0, prefixLength);
+
+        foreach (char c in prefix)
+        {
+            await _page.Keyboard.TypeAsync(c.ToString());
+            await _page.WaitForTimeoutAsync(100);
+        }
+
+        await Suggestions.First.WaitForAsync(new() 
+        { 
+            State = WaitForSelectorState.Visible, 
+            Timeout = 10_000 
+        });
+    }
 
     public async Task SelectCitySuggestionAsync(string city)
     {
@@ -65,21 +68,19 @@ public class SearchPage
         Assert.That(header, Is.EqualTo(expected), $"Header mismatch, expected: \"{expected}\" but actual: \"{header}\"");
     }
 
-    public async Task AssertTileAddressesContainAsync(string cityState,
-                                                  int takeCount = int.MaxValue)
-{
-    int total = await TileAddresses.CountAsync();
-    Assert.That(total, Is.GreaterThan(0), "Nijedan listing tile nije pronađen.");
-
-    int limit = Math.Min(total, takeCount);
-    for (int i = 0; i < limit; i++)
+    public async Task AssertTileAddressesContainAsync(string cityState, int takeCount = int.MaxValue)
     {
-        string addr = (await TileAddresses.Nth(i).InnerTextAsync()).Trim();
-        TestContext.Progress.WriteLine($"[DEBUG] Tile {i} → \"{addr}\"");
+        int total = await TileAddresses.CountAsync();
+        Assert.That(total, Is.GreaterThan(0), "Nijedan listing tile nije pronađen.");
 
-        Assert.That(addr, Does.Contain(cityState).IgnoreCase, $"Tile #{i} ne sadrži očekivani grad „{cityState}“.");
+        int limit = Math.Min(total, takeCount);
+        for (int i = 0; i < limit; i++)
+        {
+            string addr = (await TileAddresses.Nth(i).InnerTextAsync()).Trim();
+            TestContext.Progress.WriteLine($"[DEBUG] Tile {i} → \"{addr}\"");
+
+            Assert.That(addr, Does.Contain(cityState).IgnoreCase, $"Tile #{i} ne sadrži očekivani grad „{cityState}“.");
+        }
     }
-}
-
-     
+    
 }
