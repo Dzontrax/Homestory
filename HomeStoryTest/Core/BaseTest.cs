@@ -13,7 +13,8 @@ public class BaseTest
         _pw      = await Playwright.CreateAsync();
         _browser = await _pw.Chromium.LaunchAsync(new() 
         { 
-            Headless = false 
+            Headless = false,
+            SlowMo   = 250
         });
     }
 
