@@ -17,6 +17,7 @@ public class SearchPage
     private ILocator Suggestions => _page.Locator("[role='option']");
     private ILocator ResultsHeader => _page.Locator("h2.listings__homesForSale___dnyPH");  
     private ILocator TileAddresses => _page.Locator(".listingItem__address___CKkGl");
+    private ILocator TilesPanelTitle => _page.Locator("h2.listings__homesForSale___dnyPH");
     private ILocator PriceToggleBtn => _page.Locator("button.priceRange__toggleButton___smxgE");
     private ILocator MinPriceInput => _page.Locator("input[aria-label='Minimum Price']");
     private ILocator MaxPriceInput => _page.Locator("input[aria-label='Maximum Price']");
@@ -66,8 +67,7 @@ public class SearchPage
         });
 
         await option.ClickAsync();
-        await _page.Locator("h2.listings__homesForSale___dnyPH")
-                            .WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 30_000 });
+        await TilesPanelTitle.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 30_000 });
     }
 
     public async Task AssertHeaderMatchesAsync(string expectedCity, int timeoutMs = 30_000)
