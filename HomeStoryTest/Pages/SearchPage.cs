@@ -143,7 +143,7 @@ await OpenPriceDropdownAndWaitAsync();
         new() { State = WaitForSelectorState.Visible, Timeout = 30_000 });
     }
 
-    public async Task AssertTilesWithinPriceAsync(int maxPrice)
+    public async Task AssertTilesWithinPriceAsync(int minPrice, int maxPrice)
     {
     var priceLocs = _page.Locator(".listing-tile .price");
     int n = await priceLocs.CountAsync();
@@ -152,7 +152,7 @@ await OpenPriceDropdownAndWaitAsync();
     {
         string raw = (await priceLocs.Nth(i).InnerTextAsync()).Trim();
         int value  = int.Parse(raw.Replace("$", "").Replace(",", ""));
-        Assert.That(value, Is.LessThanOrEqualTo(maxPrice),
+        Assert.That(value, Is.InRange(minPrice, maxPrice),
             $"Tile #{i} ({raw}) > max {maxPrice}");
     }
 }

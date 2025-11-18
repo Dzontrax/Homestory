@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using HomeStoryTest.Core;
 using HomeStoryTest.Pages;
 
@@ -18,8 +19,8 @@ public class Tests : BaseTest
         await searchPage.AssertTileAddressesContainAsync(city);
     }
 
-    [TestCase("Houston, TX")]
-    public async Task Price_Filter_Functionality(string city)
+    [TestCase("Houston, TX", 1, 100000)]
+    public async Task Price_Filter_Functionality(string city, int minPrice, int maxPrice)
     {
         var page = await CreatePageSessionAsync();
         var searchPage = new SearchPage(page);
@@ -27,9 +28,9 @@ public class Tests : BaseTest
         await searchPage.GotoAsync();
         await searchPage.TypePrefixCharByCharAsync("Houston, TX", 3);
         await searchPage.SelectCitySuggestionAsync(city); 
-        await searchPage.SetMinPrice(1);
-        await searchPage.SetMaxPrice(100000);
-        await searchPage.AssertTilesWithinPriceAsync(100_000);
+        await searchPage.SetMinPrice(minPrice);
+        await searchPage.SetMaxPrice(maxPrice);
+        await searchPage.AssertTilesWithinPriceAsync(minPrice, maxPrice);
     
         // Assert that the value in the price rang e has been given the setted price
         // Change the price between 100000 and 400000$
