@@ -1,6 +1,4 @@
-using System.Data;
 using Microsoft.Playwright;
-using Microsoft.VisualBasic.FileIO;
 
 namespace HomeStoryTest.Pages;
 
@@ -17,24 +15,13 @@ public class SearchPage
     private ILocator LocationSearchInput => _page.Locator("[data-qa='search-location-typeahead']");
     private ILocator Suggestion(string city) => _page.Locator($"[role='option'][aria-label='{city}']");
     private ILocator Suggestions => _page.Locator("[role='option']");
-    private ILocator ResultsHeader => _page.Locator("h2.listings__homesForSale___dnyPH");
+    private ILocator ResultsHeader => _page.Locator("h2.listings__homesForSale___dnyPH");  
+    private ILocator TileAddresses => _page.Locator(".listingItem__address___CKkGl");
+
 
     public async Task GotoAsync()
     {
         await _page.GotoAsync("https://search.homestory.co/");
-    }
-
-    public async Task EnterCityPrefixAsync(string city, int prefixLength= 4)
-    {
-        var prefix = city.Substring(0, prefixLength);
-
-        await _page.WaitForTimeoutAsync(7000);
-        await LocationSearchInput.FillAsync(prefix);
-        await Suggestions.First.WaitForAsync(new()
-        {
-            State = WaitForSelectorState.Visible,
-            Timeout = 10_000
-        });
     }
 
     public async Task TypePrefixCharByCharAsync(string city, int prefixLength = 3)
@@ -64,25 +51,35 @@ public class SearchPage
         });
 
         await option.ClickAsync();
-        await _page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+        await _page.Locator("h2.listings__homesForSale___dnyPH")
+                            .WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 30_000 });
     }
 
-    public async Task SearchSuggestionAsync(string city)
+    public async Task AssertHeaderMatchesAsync(string expectedCity, int timeoutMs = 30_000)
     {
-        await LocationSearchInput.FillAsync(city);
-        var option = Suggestion(city);
+        await ResultsHeader.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = timeoutMs });
 
-        await option.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 10_000});
-        await option.ClickAsync();
+        string header    = (await ResultsHeader.InnerTextAsync()).Trim();
+        string expected  = $"Homes for Sale in {expectedCity}";
 
-           
+        Assert.That(header, Is.EqualTo(expected), $"Header mismatch, expected: \"{expected}\" but actual: \"{header}\"");
     }
 
-    public async Task<bool> AssertHeaderMatchingAsync(string expectedCity)
+    public async Task AssertTileAddressesContainAsync(string cityState,
+                                                  int takeCount = int.MaxValue)
+{
+    int total = await TileAddresses.CountAsync();
+    Assert.That(total, Is.GreaterThan(0), "Nijedan listing tile nije pronađen.");
+
+    int limit = Math.Min(total, takeCount);
+    for (int i = 0; i < limit; i++)
     {
-        string header = (await ResultsHeader.InnerHTMLAsync()).Trim();
-        return header.Equals($"Homes for sale in {expectedCity}");
+        string addr = (await TileAddresses.Nth(i).InnerTextAsync()).Trim();
+        TestContext.Progress.WriteLine($"[DEBUG] Tile {i} → \"{addr}\"");
+
+        Assert.That(addr, Does.Contain(cityState).IgnoreCase, $"Tile #{i} ne sadrži očekivani grad „{cityState}“.");
     }
+}
 
      
 }
