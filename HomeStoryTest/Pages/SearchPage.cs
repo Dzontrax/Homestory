@@ -1,5 +1,6 @@
 using Microsoft.Playwright;
 using HomeStoryTest.Helpers;
+using System.Runtime.CompilerServices;
 
 
 namespace HomeStoryTest.Pages;
@@ -23,10 +24,9 @@ public class SearchPage
     private ILocator PriceToggleBtn => _page.Locator("button.priceRange__toggleButton___smxgE");
     private ILocator MinPriceInput => _page.Locator("input[aria-label='Minimum Price']");
     private ILocator MaxPriceInput => _page.Locator("input[aria-label='Maximum Price']");
-    private ILocator ListingItemAddress => _page.Locator(".listingItem__address___CKkGl");
     private ILocator ListBox => _page.Locator("div[role='listbox']");
     private ILocator PriceBlocks => _page.Locator("div[class^='listingItem__price___']");
-    private ILocator UpdateResultsSpinner => _page.Locator("div.mapboxMap__loaderBackground___gO7YV");
+    private ILocator NoResultsTitle => _page.Locator(".listings__noListings___CLDBd");
     private ILocator PriceOption(int value) {
         string formatted = value.ToString("#,0");
         return _page.Locator($"[role='option']:text-is('${formatted}')")
@@ -84,42 +84,20 @@ public class SearchPage
         });
     }
 
-    public async Task SetMinPriceByTyping(int min, bool useMenu = false)
+    public async Task SetMinPriceByTyping(int min)
     {
-        await OpenPriceDropdownAndWaitAsync();     
-        
-        await MinPriceInput.FillAsync(min.ToString());       
-        var opt = PriceOption(min);
-        if (await opt.CountAsync() > 0)
-            await opt.First.ClickAsync();
-        else
-            await _page.Keyboard.PressAsync("Enter");
-
-        await PriceToggleBtn.WaitForAsync(new()
-        {
-            State   = WaitForSelectorState.Visible,
-            Timeout = 30_000
-        });
-
-        await Utils.WaitForUpdateResultsAsync(_page);
+        await PriceToggleBtn.ClickAsync(); 
+        await MinPriceInput.FillAsync(min.ToString());
+        await _page.Keyboard.PressAsync("Tab");
+        await _page.WaitForUpdateResultsAsync();
     }
 
     public async Task SetMaxPriceByTyping(int max)
     {
-        await OpenPriceDropdownAndWaitAsync();  
-
-         await MaxPriceInput.FillAsync(max.ToString());
-        var opt = PriceOption(max);
-
-        if (await opt.CountAsync() > 0)
-            await opt.First.ClickAsync();
-        else
-            await _page.Keyboard.PressAsync("Enter");
-
-        await ListingItemAddress.First.WaitForAsync(
-            new() { State = WaitForSelectorState.Visible, Timeout = 30_000 });
-
-            await Utils.WaitForUpdateResultsAsync(_page);
+        await PriceToggleBtn.ClickAsync();
+        await MaxPriceInput.FillAsync(max.ToString());
+        await _page.Keyboard.PressAsync("Enter"); 
+        await _page.WaitForUpdateResultsAsync();
     }
    
     public async Task SetMinPriceByMenuAsync(int value)
@@ -213,6 +191,17 @@ public class SearchPage
             string addr = (await TileAddresses.Nth(i).InnerTextAsync()).Trim();
             Assert.That(addr, Does.Contain(cityState).IgnoreCase, $"Tile #{i} doesn't contain expected city „{cityState}“.");
         }
+    }
+
+    public async Task AssertNoResult()
+    {
+        var title = NoResultsTitle;
+        await title.WaitForAsync(new() { State = WaitForSelectorState.Visible });
+
+        string actual = (await title.InnerTextAsync()).Trim();
+        string expected = "There are no results for your search.";
+
+        Assert.That(actual, Is.EqualTo(expected), $"Header mismatch – expected \"{expected}\", got \"{actual}\"");
     }
     
     }

@@ -86,5 +86,19 @@ public class Tests : BaseTest
         await searchPage.SetMaxPriceByMenuAsync(price);
         await searchPage.AssertPricesExactAsync(price);
     }
+
+    [TestCase("Houston, TX")]
+    public async Task Out_Of_Range_Amounts_Should_Throw_No_result(string city)
+    {
+        var page = await CreatePageSessionAsync();
+        var searchPage = new SearchPage(page);
+
+        await searchPage.GotoAsync();
+        await searchPage.TypePrefixCharByCharAsync("Houston, TX", 3);
+        await searchPage.SelectCitySuggestionAsync(city); 
+        await searchPage.SetMinPriceByTyping(60000000);
+        await searchPage.SetMaxPriceByTyping(60000000);
+        await searchPage.AssertNoResult();
+    }
     
 }
