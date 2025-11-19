@@ -21,17 +21,16 @@ public class SearchPage
     private ILocator PriceToggleBtn => _page.Locator("button.priceRange__toggleButton___smxgE");
     private ILocator MinPriceInput => _page.Locator("input[aria-label='Minimum Price']");
     private ILocator MaxPriceInput => _page.Locator("input[aria-label='Maximum Price']");
-    private ILocator ListingTile => _page.Locator(".listing-tile .price");
     private ILocator ListingItemAddress => _page.Locator(".listingItem__address___CKkGl");
     private ILocator ListBox => _page.Locator("div[role='listbox']");
+    private ILocator PriceBlocks => _page.Locator("div[class^='listingItem__price___']");
+    private ILocator UpdateResultsSpinner => _page.Locator("div.mapboxMap__loaderBackground___gO7YV");
     private ILocator PriceOption(int value) {
         string formatted = value.ToString("#,0");
         return _page.Locator($"[role='option']:text-is('${formatted}')")
                     .Or(_page.Locator($"[role='option']:text-matches('{formatted}')"));
                     
     }
-    
-
     public async Task GotoAsync()
     {
         await _page.GotoAsync("https://search.homestory.co/");
@@ -104,7 +103,20 @@ public class SearchPage
         });
     }
 
-    public async Task SetMinPrice(int min, bool useMenu = false)
+    private async Task WaitForUpdateResultsAsync(int extraDelayMs = 1000)
+    {
+        await UpdateResultsSpinner
+                .WaitForAsync(new()
+                {
+                    State   = WaitForSelectorState.Hidden,
+                    Timeout = 10_000
+                });
+
+        if (extraDelayMs > 0)
+            await _page.WaitForTimeoutAsync(extraDelayMs);
+    }
+
+    public async Task SetMinPriceByTyping(int min, bool useMenu = false)
     {
         await OpenPriceDropdownAndWaitAsync();     
         
@@ -120,9 +132,11 @@ public class SearchPage
             State   = WaitForSelectorState.Visible,
             Timeout = 30_000
         });
+
+        await WaitForUpdateResultsAsync();
     }
 
-    public async Task SetMaxPrice(int max)
+    public async Task SetMaxPriceByTyping(int max)
     {
         await OpenPriceDropdownAndWaitAsync();  
 
@@ -136,6 +150,8 @@ public class SearchPage
 
         await ListingItemAddress.First.WaitForAsync(
             new() { State = WaitForSelectorState.Visible, Timeout = 30_000 });
+
+            await WaitForUpdateResultsAsync();
     }
    
     public async Task SetMinPriceByMenuAsync(int value)
@@ -145,6 +161,7 @@ public class SearchPage
         await ListBox.WaitForAsync(new() { State = WaitForSelectorState.Visible });
         await PriceOption(value).First.ClickAsync(); 
         await PriceToggleBtn.WaitForAsync(new() { State = WaitForSelectorState.Visible });
+        await WaitForUpdateResultsAsync(); 
     }
 
     public async Task SetMaxPriceByMenuAsync(int amount)
@@ -154,46 +171,66 @@ public class SearchPage
         await ListBox.WaitForAsync(new() { State = WaitForSelectorState.Visible });
         await PriceOption(amount).First.ClickAsync();
         await PriceToggleBtn.WaitForAsync(new() { State = WaitForSelectorState.Visible });
+        await WaitForUpdateResultsAsync(); 
     }
 
-    public async Task AssertTilesWithinPriceAsync(int minPrice, int maxPrice)
+    private static int ParsePrice(string raw)
     {
-    var priceLocs = ListingTile;
-    int n = await priceLocs.CountAsync();
-
-    for (int i = 0; i < n; i++)
-    {
-        string raw = (await priceLocs.Nth(i).InnerTextAsync()).Trim();
-        if (int.TryParse(raw.Replace("$", "").Replace(",", ""), out int value))
-        {
-            Assert.That(value, Is.InRange(minPrice, maxPrice),
-                $"Tile #{i} ({raw}) is not in range [{minPrice}-{maxPrice}]");
-        }
-        else
-        {
-            Assert.Fail($"Could not parse price for tile #{i}: {raw}");
-        }
-    }
+        string num = string.Concat(raw.Split('\n')[0]
+                                    .Where(char.IsDigit));
+        return int.Parse(num);
     }
 
-    public async Task AssertPriceAboveMinAsync(int minPrice)
+    public async Task AssertPricesFromAsync(int min)
     {
-        var priceLocs = ListingTile;
-        var rawPrices = await priceLocs.AllInnerTextsAsync(); 
+        int total = await PriceBlocks.CountAsync();
+        Assert.That(total, Is.GreaterThan(0), "No tiles with price tag.");
 
-        foreach (var raw in rawPrices)
+        for (int i = 0; i < total; i++)
         {
-            if (int.TryParse(raw.Replace("$", "").Replace(",", ""), out int value))
-            {
-                Assert.That(value, Is.GreaterThanOrEqualTo(minPrice),
-                    $"Tile ({raw}) isn't above minimal price ({minPrice}) when max price is 'No max'.");
-            }
-            else
-            {
-                
-            }
+            int val = ParsePrice(await PriceBlocks.Nth(i).InnerTextAsync());
+            Assert.That(val >= min, $"Tile #{i}: {val} < {min}");
         }
     }
+
+    public async Task AssertPricesToAsync(int max)
+    {
+        int total = await PriceBlocks.CountAsync();
+        Assert.That(total, Is.GreaterThan(0), "No tiles with price tag.");
+
+        for (int i = 0; i < total; i++)
+        {
+            int val = ParsePrice(await PriceBlocks.Nth(i).InnerTextAsync());
+            Assert.That(val <= max, $"Tile #{i}: {val} > {max}");
+        }
+    }
+
+    public async Task AssertPricesInRangeAsync(int min, int max)
+    {
+        int total = await PriceBlocks.CountAsync();
+        Assert.That(total, Is.GreaterThan(0), "No tiles with price tag.");
+
+        for (int i = 0; i < total; i++)
+        {
+            int val = ParsePrice(await PriceBlocks.Nth(i).InnerTextAsync());
+            Assert.That(val >= min && val <= max,
+                $"Tile #{i}: {val} not in range [{min} – {max}]");
+        }
+    }
+
+    public async Task AssertPricesExactAsync(int exact)
+    {
+        int total = await PriceBlocks.CountAsync();
+        Assert.That(total, Is.GreaterThan(0), "No tiles with price tag.");
+
+        for (int i = 0; i < total; i++)
+        {
+            int val = ParsePrice(await PriceBlocks.Nth(i).InnerTextAsync());
+            Assert.That(val == exact, $"Tile #{i}: {val} ≠ {exact}");
+            
+        }
+    }
+    
     }
         
 

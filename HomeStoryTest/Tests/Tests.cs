@@ -19,7 +19,7 @@ public class Tests : BaseTest
         await searchPage.AssertTileAddressesContainAsync(city);
     }
 
-    [TestCase("Houston, TX", 1, 100000)]
+    [TestCase("Houston, TX", 100000, 1000000)]
     public async Task Set_Price_Filter_By_Typing_Amount(string city, int minPrice, int maxPrice)
     {
         var page = await CreatePageSessionAsync();
@@ -28,9 +28,9 @@ public class Tests : BaseTest
         await searchPage.GotoAsync();
         await searchPage.TypePrefixCharByCharAsync("Houston, TX", 3);
         await searchPage.SelectCitySuggestionAsync(city); 
-        await searchPage.SetMinPrice(minPrice);
-        await searchPage.SetMaxPrice(maxPrice);
-        await searchPage.AssertTilesWithinPriceAsync(minPrice, maxPrice);
+        await searchPage.SetMinPriceByTyping(minPrice);
+        await searchPage.SetMaxPriceByTyping(maxPrice);
+        await searchPage.AssertPricesInRangeAsync(minPrice, maxPrice);
     }
 
     [TestCase("Houston, TX", 100000, 300000)]
@@ -44,11 +44,11 @@ public class Tests : BaseTest
         await searchPage.SelectCitySuggestionAsync(city); 
         await searchPage.SetMinPriceByMenuAsync(minPrice);
         await searchPage.SetMaxPriceByMenuAsync(maxPrice);
-        await searchPage.AssertTilesWithinPriceAsync(minPrice, maxPrice);
+        await searchPage.AssertPricesInRangeAsync(minPrice, maxPrice);
     }
 
-    [TestCase("Houston, TX", 100000, 300000)]
-    public async Task Select_Price_Up_To(string city, int minPrice, int maxPrice)
+    [TestCase("Houston, TX", 300000)]
+    public async Task Select_Price_Up_To(string city, int maxPrice)
     {
         var page = await CreatePageSessionAsync();
         var searchPage = new SearchPage(page);
@@ -57,11 +57,11 @@ public class Tests : BaseTest
         await searchPage.TypePrefixCharByCharAsync("Houston, TX", 3);
         await searchPage.SelectCitySuggestionAsync(city); 
         await searchPage.SetMaxPriceByMenuAsync(maxPrice);
-        await searchPage.AssertTilesWithinPriceAsync(minPrice, maxPrice);
+        await searchPage.AssertPricesToAsync(maxPrice);
     }
 
-    [TestCase("Houston, TX", 100000, 300000)]
-    public async Task Select_Price_From(string city, int minPrice, int maxPrice)
+    [TestCase("Houston, TX", 100000)]
+    public async Task Select_Price_From(string city, int minPrice)
     {
         var page = await CreatePageSessionAsync();
         var searchPage = new SearchPage(page);
@@ -70,10 +70,21 @@ public class Tests : BaseTest
         await searchPage.TypePrefixCharByCharAsync("Houston, TX", 3);
         await searchPage.SelectCitySuggestionAsync(city); 
         await searchPage.SetMinPriceByMenuAsync(minPrice);
-        await searchPage.AssertTilesWithinPriceAsync(minPrice, maxPrice);
+        await searchPage.AssertPricesFromAsync(minPrice);
     }
 
-    //TO DO: jos jedan assert kada si min i mac=x JEDNAKI -> trazi se cena za TACAN Iznos, a ne range
+    [TestCase("Houston, TX", 300000)]
+    public async Task Same_Price_Range_Should_Return_Exact_Amount(string city, int price)
+    {
+        var page = await CreatePageSessionAsync();
+        var searchPage = new SearchPage(page);
 
+        await searchPage.GotoAsync();
+        await searchPage.TypePrefixCharByCharAsync("Houston, TX", 3);
+        await searchPage.SelectCitySuggestionAsync(city); 
+        await searchPage.SetMinPriceByMenuAsync(price);
+        await searchPage.SetMaxPriceByMenuAsync(price);
+        await searchPage.AssertPricesExactAsync(price);
+    }
     
 }

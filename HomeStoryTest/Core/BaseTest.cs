@@ -38,6 +38,7 @@ public class BaseTest
     protected async Task<IPage> CreatePageSessionAsync()
     {
         var ctx = await _browser.NewContextAsync();
+        
         return await ctx.NewPageAsync();
     }
 }
