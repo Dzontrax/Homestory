@@ -30,3 +30,4 @@ Nothing more complicated than this:
 Core/BaseTest - handles Playwright life-cycle,
 Pages/SearchPage expresses user flows,
 Core/Utils - keeps nitty-gritty utilities out of the way.
+Validators/Assertions - little class to keep the assertions in one place.

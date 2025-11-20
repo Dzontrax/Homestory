@@ -1,6 +1,6 @@
 using Microsoft.Playwright;
 using HomeStoryTest.Helpers;
-using System.Runtime.CompilerServices;
+
 
 
 namespace HomeStoryTest.Pages;
@@ -18,15 +18,11 @@ public class SearchPage
     private ILocator LocationSearchInput => _page.Locator("[data-qa='search-location-typeahead']");
     private ILocator Suggestion(string city) => _page.Locator($"[role='option'][aria-label='{city}']");
     private ILocator Suggestions => _page.Locator("[role='option']");
-    private ILocator ResultsHeader => _page.Locator("h2.listings__homesForSale___dnyPH");  
-    private ILocator TileAddresses => _page.Locator(".listingItem__address___CKkGl");
     private ILocator TilesPanelTitle => _page.Locator("h2.listings__homesForSale___dnyPH");
     private ILocator PriceToggleBtn => _page.Locator("button.priceRange__toggleButton___smxgE");
     private ILocator MinPriceInput => _page.Locator("input[aria-label='Minimum Price']");
     private ILocator MaxPriceInput => _page.Locator("input[aria-label='Maximum Price']");
     private ILocator ListBox => _page.Locator("div[role='listbox']");
-    private ILocator PriceBlocks => _page.Locator("div[class^='listingItem__price___']");
-    private ILocator NoResultsTitle => _page.Locator(".listings__noListings___CLDBd");
     private ILocator PriceOption(int value) {
         string formatted = value.ToString("#,0");
         return _page.Locator($"[role='option']:text-is('${formatted}')")
@@ -70,8 +66,6 @@ public class SearchPage
         await option.ClickAsync();
         await TilesPanelTitle.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 30_000 });
     }
-
-    
 
     private async Task OpenPriceDropdownAndWaitAsync()
     {
@@ -119,91 +113,7 @@ public class SearchPage
         await PriceToggleBtn.WaitForAsync(new() { State = WaitForSelectorState.Visible });
         await Utils.WaitForUpdateResultsAsync(_page); 
     }
-
-    public async Task AssertPricesFromAsync(int min)
-    {
-        int total = await PriceBlocks.CountAsync();
-        Assert.That(total, Is.GreaterThan(0), "No tiles with price tag.");
-
-        for (int i = 0; i < total; i++)
-        {
-            int val = Utils.ParsePrice(await PriceBlocks.Nth(i).InnerTextAsync());
-            Assert.That(val >= min, $"Tile #{i}: {val} < {min}");
-        }
-    }
-
-    public async Task AssertPricesToAsync(int max)
-    {
-        int total = await PriceBlocks.CountAsync();
-        Assert.That(total, Is.GreaterThan(0), "No tiles with price tag.");
-
-        for (int i = 0; i < total; i++)
-        {
-            int val = Utils.ParsePrice(await PriceBlocks.Nth(i).InnerTextAsync());
-            Assert.That(val <= max, $"Tile #{i}: {val} > {max}");
-        }
-    }
-
-    public async Task AssertPricesInRangeAsync(int min, int max)
-    {
-        int total = await PriceBlocks.CountAsync();
-        Assert.That(total, Is.GreaterThan(0), "No tiles with price tag.");
-
-        for (int i = 0; i < total; i++)
-        {
-            int val = Utils.ParsePrice(await PriceBlocks.Nth(i).InnerTextAsync());
-            Assert.That(val >= min && val <= max,
-                $"Tile #{i}: {val} not in range [{min} – {max}]");
-        }
-    }
-
-    public async Task AssertPricesExactAsync(int exact)
-    {
-        int total = await PriceBlocks.CountAsync();
-        Assert.That(total, Is.GreaterThan(0), "No tiles with price tag.");
-
-        for (int i = 0; i < total; i++)
-        {
-            int val = Utils.ParsePrice(await PriceBlocks.Nth(i).InnerTextAsync());
-            Assert.That(val == exact, $"Tile #{i}: {val} ≠ {exact}");
-            
-        }
-    }
-
-    public async Task AssertHeaderMatchesAsync(string expectedCity, int timeoutMs = 30_000)
-    {
-        await ResultsHeader.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = timeoutMs });
-
-        string header    = (await ResultsHeader.InnerTextAsync()).Trim();
-        string expected  = $"Homes for Sale in {expectedCity}";
-
-        Assert.That(header, Is.EqualTo(expected), $"Header mismatch, expected: \"{expected}\" but actual: \"{header}\"");
-    }
-
-    public async Task AssertTileAddressesContainAsync(string cityState, int takeCount = int.MaxValue)
-    {
-        int total = await TileAddresses.CountAsync();
-        Assert.That(total, Is.GreaterThan(0), "No list has been found.");
-
-        int limit = Math.Min(total, takeCount);
-        for (int i = 0; i < limit; i++)
-        {
-            string addr = (await TileAddresses.Nth(i).InnerTextAsync()).Trim();
-            Assert.That(addr, Does.Contain(cityState).IgnoreCase, $"Tile #{i} doesn't contain expected city „{cityState}“.");
-        }
-    }
-
-    public async Task AssertNoResult()
-    {
-        var title = NoResultsTitle;
-        await title.WaitForAsync(new() { State = WaitForSelectorState.Visible });
-
-        string actual = (await title.InnerTextAsync()).Trim();
-        string expected = "There are no results for your search.";
-
-        Assert.That(actual, Is.EqualTo(expected), $"Header mismatch – expected \"{expected}\", got \"{actual}\"");
-    }
     
-    }
+}
         
 

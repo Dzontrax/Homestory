@@ -1,6 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using HomeStoryTest.Core;
 using HomeStoryTest.Pages;
+using HomeStoryTest.Validations;
 
 namespace HomeStoryTest.Tests;
 
@@ -11,12 +12,13 @@ public class Tests : BaseTest
     {
         var page = await CreatePageSessionAsync();
         var searchPage = new SearchPage(page);
+        var assert = new Assertions(page);
 
         await searchPage.GotoAsync();
         await searchPage.TypePrefixCharByCharAsync("Houston, TX", 3);
         await searchPage.SelectCitySuggestionAsync(city);       
-        await searchPage.AssertHeaderMatchesAsync(city); 
-        await searchPage.AssertTileAddressesContainAsync(city);
+        await assert.HeaderMatchesAsync(city); 
+        await assert.AssertTileAddressesContainAsync(city);
     }
 
     [TestCase("Houston, TX", 100000, 1000000)]
@@ -24,13 +26,14 @@ public class Tests : BaseTest
     {
         var page = await CreatePageSessionAsync();
         var searchPage = new SearchPage(page);
+        var assert = new Assertions(page);
 
         await searchPage.GotoAsync();
         await searchPage.TypePrefixCharByCharAsync("Houston, TX", 3);
         await searchPage.SelectCitySuggestionAsync(city); 
         await searchPage.SetMinPriceByTyping(minPrice);
         await searchPage.SetMaxPriceByTyping(maxPrice);
-        await searchPage.AssertPricesInRangeAsync(minPrice, maxPrice);
+        await assert.PricesInRangeAsync(minPrice, maxPrice);
     }
 
     [TestCase("Houston, TX", 100000, 300000)]
@@ -38,13 +41,14 @@ public class Tests : BaseTest
     {
         var page = await CreatePageSessionAsync();
         var searchPage = new SearchPage(page);
+        var assert = new Assertions(page);
 
         await searchPage.GotoAsync();
         await searchPage.TypePrefixCharByCharAsync("Houston, TX", 3);
         await searchPage.SelectCitySuggestionAsync(city); 
         await searchPage.SetMinPriceByMenuAsync(minPrice);
         await searchPage.SetMaxPriceByMenuAsync(maxPrice);
-        await searchPage.AssertPricesInRangeAsync(minPrice, maxPrice);
+        await assert.PricesInRangeAsync(minPrice, maxPrice);
     }
 
     [TestCase("Houston, TX", 300000)]
@@ -52,12 +56,13 @@ public class Tests : BaseTest
     {
         var page = await CreatePageSessionAsync();
         var searchPage = new SearchPage(page);
+        var assert = new Assertions(page);
 
         await searchPage.GotoAsync();
         await searchPage.TypePrefixCharByCharAsync("Houston, TX", 3);
         await searchPage.SelectCitySuggestionAsync(city); 
         await searchPage.SetMaxPriceByMenuAsync(maxPrice);
-        await searchPage.AssertPricesToAsync(maxPrice);
+        await assert.PricesToAsync(maxPrice);
     }
 
     [TestCase("Houston, TX", 100000)]
@@ -65,12 +70,13 @@ public class Tests : BaseTest
     {
         var page = await CreatePageSessionAsync();
         var searchPage = new SearchPage(page);
+        var assert = new Assertions(page);
 
         await searchPage.GotoAsync();
         await searchPage.TypePrefixCharByCharAsync("Houston, TX", 3);
         await searchPage.SelectCitySuggestionAsync(city); 
         await searchPage.SetMinPriceByMenuAsync(minPrice);
-        await searchPage.AssertPricesFromAsync(minPrice);
+        await assert.PricesFromAsync(minPrice);
     }
 
     [TestCase("Houston, TX", 300000)]
@@ -78,13 +84,14 @@ public class Tests : BaseTest
     {
         var page = await CreatePageSessionAsync();
         var searchPage = new SearchPage(page);
+        var assert = new Assertions(page);
 
         await searchPage.GotoAsync();
         await searchPage.TypePrefixCharByCharAsync("Houston, TX", 3);
         await searchPage.SelectCitySuggestionAsync(city); 
         await searchPage.SetMinPriceByMenuAsync(price);
         await searchPage.SetMaxPriceByMenuAsync(price);
-        await searchPage.AssertPricesExactAsync(price);
+        await assert.PricesExactAsync(price);
     }
 
     [TestCase("Houston, TX")]
@@ -92,13 +99,14 @@ public class Tests : BaseTest
     {
         var page = await CreatePageSessionAsync();
         var searchPage = new SearchPage(page);
+        var assert = new Assertions(page);
 
         await searchPage.GotoAsync();
         await searchPage.TypePrefixCharByCharAsync("Houston, TX", 3);
         await searchPage.SelectCitySuggestionAsync(city); 
         await searchPage.SetMinPriceByTyping(60000000);
         await searchPage.SetMaxPriceByTyping(60000000);
-        await searchPage.AssertNoResult();
+        await assert.NoResult();
     }
     
 }
