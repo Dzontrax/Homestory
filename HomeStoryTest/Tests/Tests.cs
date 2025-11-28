@@ -1,7 +1,4 @@
-using System.ComponentModel.DataAnnotations;
 using HomeStoryTest.Core;
-using HomeStoryTest.Pages;
-using HomeStoryTest.Validations;
 
 namespace HomeStoryTest.Tests;
 
@@ -12,7 +9,7 @@ public class Tests : BaseTest
     {       
         await Search.GotoAsync(); 
         await Search.SearchCityAsync("Houston, TX");
-        await Checks.AssertTileAddressesContainAsync(city);
+        await Assert.AssertTileAddressesContainAsync(city);
     }
 
     [TestCase("Houston, TX", 100000, 1000000)]
@@ -22,7 +19,7 @@ public class Tests : BaseTest
         await Search.SearchCityAsync("Houston, TX");
         await Search.SetMinPriceByTyping(minPrice);
         await Search.SetMaxPriceByTyping(maxPrice);
-        await Checks.PricesInRangeAsync(minPrice, maxPrice);
+        await Assert.PricesInRangeAsync(minPrice, maxPrice);
     }
 
     [TestCase("Houston, TX", 100000, 300000)]
@@ -32,7 +29,7 @@ public class Tests : BaseTest
         await Search.SearchCityAsync("Houston, TX");
         await Search.SetMinPriceByMenuAsync(minPrice);
         await Search.SetMaxPriceByMenuAsync(maxPrice);
-        await Checks.PricesInRangeAsync(minPrice, maxPrice);
+        await Assert.PricesInRangeAsync(minPrice, maxPrice);
     }
 
     [TestCase("Houston, TX", 300000)]
@@ -41,7 +38,7 @@ public class Tests : BaseTest
         await Search.GotoAsync();
         await Search.SearchCityAsync("Houston, TX");
         await Search.SetMaxPriceByMenuAsync(maxPrice);
-        await Checks.PricesToAsync(maxPrice);
+        await Assert.PricesToAsync(maxPrice);
     }
 
     [TestCase("Houston, TX", 100000)]
@@ -50,7 +47,7 @@ public class Tests : BaseTest
         await Search.GotoAsync();
         await Search.SearchCityAsync("Houston, TX");
         await Search.SetMinPriceByMenuAsync(minPrice);
-        await Checks.PricesFromAsync(minPrice);
+        await Assert.PricesFromAsync(minPrice);
     }
 
     [TestCase("Houston, TX", 300000)]
@@ -60,7 +57,7 @@ public class Tests : BaseTest
         await Search.SearchCityAsync("Houston, TX");
         await Search.SetMinPriceByMenuAsync(price);
         await Search.SetMaxPriceByMenuAsync(price);
-        await Checks.PricesExactAsync(price);
+        await Assert.PricesExactAsync(price);
     }
 
     [TestCase("Houston, TX")]
@@ -70,7 +67,7 @@ public class Tests : BaseTest
         await Search.SearchCityAsync("Houston, TX");
         await Search.SetMinPriceByTyping(600000000);
         await Search.SetMaxPriceByTyping(600000000);
-        await Checks.NoResult();
+        await Assert.NoResult();
     }
     
 }
