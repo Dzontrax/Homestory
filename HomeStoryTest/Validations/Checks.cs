@@ -5,12 +5,12 @@ using Microsoft.Playwright;
 namespace HomeStoryTest.Validations;
 
 
-public class Assertions
+public class Checks
 {
 
     private readonly IPage _page;
 
-    public Assertions(IPage page)
+    public Checks(IPage page)
     {
         _page = page;
     }

@@ -1,12 +1,13 @@
 using Microsoft.Playwright;
 using HomeStoryTest.Helpers;
+using HomeStoryTest.Contracts;
 
 
 
 namespace HomeStoryTest.Pages;
 
 
-public class SearchPage
+public class SearchPage : ISearchActions
 {
     private readonly IPage _page;
 
@@ -29,9 +30,10 @@ public class SearchPage
                     .Or(_page.Locator($"[role='option']:text-matches('{formatted}')"));
                     
     }
-    public async Task GotoAsync()
+
+    public Task GotoAsync()
     {
-        await _page.GotoAsync("https://search.homestory.co/");
+        return _page.GotoAsync("https://search.homestory.co/");
     }
 
     public async Task TypePrefixCharByCharAsync(string city, int prefixLength = 3)
@@ -53,6 +55,12 @@ public class SearchPage
         });
     }
 
+    public async Task SearchCityAsync(string city)
+    {
+        await TypePrefixCharByCharAsync(city, 3);
+        await SelectCitySuggestionAsync(city);
+    }
+
     public async Task SelectCitySuggestionAsync(string city)
     {
         var option = Suggestion(city);
@@ -67,17 +75,6 @@ public class SearchPage
         await TilesPanelTitle.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 30_000 });
     }
 
-    private async Task OpenPriceDropdownAndWaitAsync()
-    {
-        await PriceToggleBtn.ClickAsync();
-
-        await MinPriceInput.WaitForAsync(new()
-        {
-            State = WaitForSelectorState.Visible,
-            Timeout = 10_000
-        });
-    }
-
     public async Task SetMinPriceByTyping(int min)
     {
         await PriceToggleBtn.ClickAsync(); 
@@ -90,7 +87,7 @@ public class SearchPage
     {
         await PriceToggleBtn.ClickAsync();
         await MaxPriceInput.FillAsync(max.ToString());
-        await _page.Keyboard.PressAsync("Enter"); 
+        await _page.Keyboard.PressAsync("Tab"); 
         await _page.WaitForUpdateResultsAsync();
     }
    
@@ -113,6 +110,9 @@ public class SearchPage
         await PriceToggleBtn.WaitForAsync(new() { State = WaitForSelectorState.Visible });
         await Utils.WaitForUpdateResultsAsync(_page); 
     }
+
+    
+
     
 }
         

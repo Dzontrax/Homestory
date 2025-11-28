@@ -1,3 +1,6 @@
+using HomeStoryTest.Contracts;
+using HomeStoryTest.Pages;
+using HomeStoryTest.Validations;
 using Microsoft.Playwright;
 
 
@@ -8,12 +11,16 @@ public class BaseTest
     private IPlaywright _pw  = null!;
     protected IBrowser _browser = null!;
 
+    protected IPage Page   = null!;
+    protected ISearchActions  Search = null!;
+    protected Checks Checks  = null!; 
+
     [OneTimeSetUp]
     public async Task GlobalSetup()
     {
-        _pw = await Playwright.CreateAsync();
-        
+        _pw = await Playwright.CreateAsync();        
     }
+    
     [SetUp]
     public async Task LaunchBrowser()
     {
@@ -22,7 +29,14 @@ public class BaseTest
             Headless = false,
             SlowMo   = 250
         });
+        var ctx  = await _browser.NewContextAsync();
+        Page     = await ctx.NewPageAsync();
+
+        var sp   = new SearchPage(Page);
+        Search   = sp;                   
+        Checks    = new Checks(Page);   
     }
+
     [TearDown] 
     public async Task CloseBrowser()
     {
